@@ -8,7 +8,7 @@ import (
 func newRouter(deps *dependencies) *gin.Engine {
 	router := gin.New()
 
-	handler := handler.New(nil)
+	handler := handler.New(deps.service)
 
 	router.POST("/messages", handler.HandleEvent)
 

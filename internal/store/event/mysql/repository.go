@@ -22,6 +22,7 @@ type Repository struct {
 func New(db *sql.DB) *Repository {
 	return &Repository{db: db}
 }
+
 func (r *Repository) Append(ctx context.Context, e domain.Event) error {
 	_, err := r.db.ExecContext(ctx, insertEvent,
 		e.Channel, e.Number, e.Type, e.Time.UTC(), string(e.Payload))
@@ -32,6 +33,14 @@ func (r *Repository) Append(ctx context.Context, e domain.Event) error {
 		return event.ErrDuplicate
 	}
 	return fmt.Errorf("insert event: %w", err)
+}
+
+func (r *Repository) Events(ctx context.Context, channel string) ([]domain.Event, error) {
+	return nil, nil
+}
+
+func (r *Repository) EventsAfter(ctx context.Context, channel string, afterNumber int64) ([]domain.Event, error) {
+	return nil, nil
 }
 
 func keyAlreadyExists(err error) bool {

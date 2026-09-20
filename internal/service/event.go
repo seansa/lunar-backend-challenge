@@ -27,8 +27,11 @@ type Service struct {
 	projection rocketProjection
 }
 
-func New() *Service {
-	return &Service{}
+func New(store eventStore, projection rocketProjection) *Service {
+	return &Service{
+		store:      store,
+		projection: projection,
+	}
 }
 
 func (s *Service) Process(ctx context.Context, message domain.Message) (Result, error) {
