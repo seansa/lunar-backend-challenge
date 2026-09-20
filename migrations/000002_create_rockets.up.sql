@@ -12,6 +12,6 @@ CREATE TABLE rockets (
     launched_at DATETIME(6) NULL,
     exploded_at DATETIME(6) NULL,
     events_applied INT UNSIGNED NOT NULL DEFAULT 0,
-    updated_at DATETIME(6) NULL,
+    updated_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     PRIMARY KEY (channel)
 ) ENGINE = InnoDB;

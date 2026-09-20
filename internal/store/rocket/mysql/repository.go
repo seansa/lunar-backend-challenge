@@ -10,14 +10,16 @@ import (
 	"github.com/seansa/lunar-backend-challenge/internal/domain"
 )
 
-const rocketColumns = `
+const rocketInsertColumns = `
 channel, rocket_type, mission, mission_changes, speed, launch_speed, status, exploded_reason,
 last_message_number, last_message_time, launched_at, exploded_at, events_applied`
 
-const selectRocket = `SELECT` + rocketColumns + ` FROM rockets WHERE channel = ?`
+const rocketSelectColumns = rocketInsertColumns + `, updated_at`
+
+const selectRocket = `SELECT` + rocketSelectColumns + ` FROM rockets WHERE channel = ?`
 
 const upsertRocket = `
-INSERT INTO rockets (` + rocketColumns + `)
+INSERT INTO rockets (` + rocketInsertColumns + `)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ON DUPLICATE KEY UPDATE
 	rocket_type = ?, mission = ?, mission_changes = ?, speed = ?, launch_speed = ?, status = ?,
@@ -69,7 +71,6 @@ func rocketArgs(rocket domain.Rocket) []any {
 		utcOrNullTime(rocket.LaunchedAt),
 		utcOrNullTime(rocket.ExplodedAt),
 		rocket.EventsApplied,
-		utcOrNullTime(rocket.UpdatedAt),
 	}
 }
 

@@ -14,6 +14,7 @@ type Result struct {
 	MessageNumber int64
 	MessageType   string
 	Applied       bool
+	Duplicate     bool
 }
 
 type eventStore interface {
@@ -40,7 +41,10 @@ func (s *Service) Process(ctx context.Context, message domain.Message) (Result, 
 		return Result{}, err
 	}
 
+	duplicate := false
 	switch err := s.store.Append(ctx, incommingEvent); {
+	case errors.Is(err, event.ErrDuplicate):
+		duplicate = true
 	case errors.Is(err, event.ErrConflict):
 		return Result{}, event.ErrConflict
 	case err != nil:
@@ -57,5 +61,6 @@ func (s *Service) Process(ctx context.Context, message domain.Message) (Result, 
 		MessageNumber: incommingEvent.Number,
 		MessageType:   string(incommingEvent.Type),
 		Applied:       applied,
+		Duplicate:     duplicate,
 	}, nil
 }
