@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -42,5 +43,31 @@ type Metadata struct {
 }
 
 func (m Message) Validate() error {
+	channel := strings.TrimSpace(m.Metadata.Channel)
+	if channel == "" {
+		return invalid("metadata.channel is required")
+	}
+	if m.Metadata.MessageNumber < 1 {
+		return invalid("metadata.messageNumber must be >= 1, got %d", m.Metadata.MessageNumber)
+	}
+	if m.Metadata.MessageTime.IsZero() {
+		return invalid("metadata.messageTime is required")
+	}
+	if m.Message == nil || string(m.Message) == "null" {
+		return invalid("message is required")
+	}
+
 	return nil
+}
+
+func invalid(format string, args ...any) error {
+	return &ValidationError{Reason: fmt.Sprintf(format, args...)}
+}
+
+type ValidationError struct {
+	Reason string
+}
+
+func (e *ValidationError) Error() string {
+	return fmt.Sprintf("%s", e.Reason)
 }
