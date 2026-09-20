@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/seansa/lunar-backend-challenge/internal/domain"
 	eventstore "github.com/seansa/lunar-backend-challenge/internal/store/event"
@@ -24,6 +23,8 @@ type Applier interface {
 	ApplyEvent(ctx context.Context, event domain.Event) (bool, error)
 }
 
+//go:generate go tool mockgen -source=service.go -destination=../mocks/consumer.go -package=mocks -typed -mock_names=store=MockStore
+
 type store interface {
 	Append(ctx context.Context, e domain.Event) error
 }
@@ -32,11 +33,10 @@ type store interface {
 type Service struct {
 	store store
 	state Applier
-	now   func() time.Time
 }
 
 func New(store store, state Applier) *Service {
-	return &Service{store: store, state: state, now: time.Now}
+	return &Service{store: store, state: state}
 }
 
 // Process appends the message to the event log and updates the rocket state.
@@ -46,13 +46,11 @@ func New(store store, state Applier) *Service {
 // it either applies the event (when a previous attempt failed after the append)
 // or does nothing.
 func (s *Service) Process(ctx context.Context, msg domain.Message) (Result, error) {
-
-	event := domain.Event{
-		Channel: msg.Metadata.Channel,
-		Number:  msg.Metadata.MessageNumber,
-		Type:    msg.Metadata.MessageType,
-		Time:    msg.Metadata.MessageTime,
-		Payload: msg.Message,
+	// The pooled endpoint normalises and validates the message exactly like the
+	// synchronous one, so the same message produces the same event.
+	event, err := domain.NewEvent(msg)
+	if err != nil {
+		return Result{}, err
 	}
 
 	duplicate := false

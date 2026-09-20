@@ -7,12 +7,6 @@ import (
 	"github.com/seansa/lunar-backend-challenge/internal/domain"
 )
 
-type acceptedResponse struct {
-	Status        string `json:"status"`
-	Channel       string `json:"channel"`
-	MessageNumber int64  `json:"messageNumber"`
-}
-
 type rocketResponse struct {
 	Channel           string     `json:"channel"`
 	Type              string     `json:"type"`

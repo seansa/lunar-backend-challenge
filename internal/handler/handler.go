@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -51,7 +50,8 @@ func New(service Processor, dispatcher Dispatcher, rocketReader RocketReader, ev
 func (h *Handler) Process(c *gin.Context) {
 	var request message
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON or empty request body", "details": err.Error()})
+		respondError(c, http.StatusBadRequest, "invalid_body",
+			"the request body must be a JSON object with the metadata and message fields")
 		return
 	}
 
@@ -74,7 +74,8 @@ func (h *Handler) Process(c *gin.Context) {
 func (h *Handler) HandleEvent(c *gin.Context) {
 	var request message
 	if err := c.ShouldBindJSON(&request); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON or empty request body", "details": err.Error()})
+		respondError(c, http.StatusBadRequest, "invalid_body",
+			"the request body must be a JSON object with the metadata and message fields")
 		return
 	}
 
@@ -85,20 +86,12 @@ func (h *Handler) HandleEvent(c *gin.Context) {
 	}
 
 	result, err := h.service.Process(c, message)
-	switch {
-	case errors.Is(err, domain.ErrInvalidMessage):
-		c.JSON(http.StatusBadRequest, fmt.Sprintf("message is not valid	%s", err.Error()))
-		return
-	case err != nil:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to consume message", "details": err.Error()})
+	if err != nil {
+		respondConsumerError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, acceptedResponse{
-		Status:        "accepted",
-		Channel:       result.Channel,
-		MessageNumber: result.MessageNumber,
-	})
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *Handler) ListRockets(c *gin.Context) {

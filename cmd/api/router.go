@@ -7,6 +7,7 @@ import (
 
 func newRouter(deps *dependencies) *gin.Engine {
 	router := gin.New()
+	router.Use(gin.Logger(), gin.Recovery())
 
 	handler := handler.New(deps.service, deps.consumer, deps.service, deps.service)
 
@@ -16,7 +17,6 @@ func newRouter(deps *dependencies) *gin.Engine {
 	router.GET("/rockets", handler.ListRockets)
 	router.GET("/rockets/:channel", handler.GetRocket)
 	router.GET("/rockets/:channel/events", handler.ListEvents)
-
 
 	return router
 }

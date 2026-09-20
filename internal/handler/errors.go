@@ -42,7 +42,11 @@ func respondValidation(c *gin.Context, err error) {
 // Non-2xx answers make the rocket redeliver, which is what we want for the
 // transient cases: at-least-once delivery plus deduplication make retries safe.
 func respondConsumerError(c *gin.Context, err error) {
+	var invalid *domain.ValidationError
+
 	switch {
+	case errors.As(err, &invalid):
+		respondValidation(c, err)
 	case errors.Is(err, consumer.ErrPoolClosed):
 		c.Header("Retry-After", "1")
 		respondError(c, http.StatusServiceUnavailable, "service_shutting_down",
