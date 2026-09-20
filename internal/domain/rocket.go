@@ -32,13 +32,14 @@ type (
 
 // Rocket is the aggregate of one channel, rebuilt by folding its events in message-number order.
 type Rocket struct {
-	Channel         string
-	Type            string
-	Mission         string
-	Speed           int64
-	LaunchSpeed     int64
-	Status          Status
-	ExplosionReason string
+	Channel           string
+	Type              string
+	Mission           string
+	Speed             int64
+	LastMessageNumber int64
+	LaunchSpeed       int64
+	Status            Status
+	ExplosionReason   string
 }
 
 // ApplyEvent folds a single event into the aggregate.

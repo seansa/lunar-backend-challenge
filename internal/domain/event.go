@@ -42,6 +42,22 @@ type Metadata struct {
 	MessageType   string
 }
 
+func NewEvent(message Message) (Event, error) {
+	metadata := message.Metadata
+
+	if err := message.Validate(); err != nil {
+		return Event{}, err
+	}
+
+	return Event{
+		Channel: strings.TrimSpace(metadata.Channel),
+		Number:  metadata.MessageNumber,
+		Time:    metadata.MessageTime.UTC(),
+		Type:    metadata.MessageType,
+		Payload: message.Message,
+	}, nil
+}
+
 func (m Message) Validate() error {
 	channel := strings.TrimSpace(m.Metadata.Channel)
 	if channel == "" {
