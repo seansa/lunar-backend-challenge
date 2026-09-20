@@ -8,9 +8,10 @@ import (
 func newRouter(deps *dependencies) *gin.Engine {
 	router := gin.New()
 
-	handler := handler.New(deps.service)
+	handler := handler.New(deps.service, deps.consumer)
 
-	router.POST("/messages", handler.HandleEvent)
+	router.POST("/messages", handler.Process)
+	router.POST("/events", handler.HandleEvent)
 
 	return router
 }

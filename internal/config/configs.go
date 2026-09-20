@@ -8,18 +8,21 @@ import (
 )
 
 const (
-	defaultHTTPPort            = 8088
-	defaultAdminerPort         = 8080
-	defaultMySQLHost           = "localhost"
-	defaultMySQLPort           = 3306
-	defaultMySQLDatabase       = "lunar"
-	defaultMySQLUser           = "lunar"
-	defaultMySQLPassword       = "lunar"
-	defaultDBMaxOpenConns      = 10
-	defaultDBMaxIdleConns      = 10
-	defaultDBConnMaxLifetime   = time.Hour
-	defaultDBConnectRetries    = 30
-	defaultDBConnectRetryDelay = time.Second
+	defaultHTTPPort               = 8088
+	defaultAdminerPort            = 8080
+	defaultMySQLHost              = "localhost"
+	defaultMySQLPort              = 3306
+	defaultMySQLDatabase          = "lunar"
+	defaultMySQLUser              = "lunar"
+	defaultMySQLPassword          = "lunar"
+	defaultDBMaxOpenConns         = 10
+	defaultDBMaxIdleConns         = 10
+	defaultDBConnMaxLifetime      = time.Hour
+	defaultDBConnectRetries       = 30
+	defaultDBConnectRetryDelay    = time.Second
+	defaultConsumerWorkers        = 5
+	defaultConsumerQueueSize      = 100
+	defaultConsumerProcessTimeout = 10 * time.Second
 )
 
 // Config contains the runtime settings shared by the API and local database
@@ -40,24 +43,31 @@ type Config struct {
 	DBConnMaxLifetime   time.Duration
 	DBConnectRetries    int
 	DBConnectRetryDelay time.Duration
+
+	ConsumerWorkers        int
+	ConsumerQueueSize      int
+	ConsumerProcessTimeout time.Duration
 }
 
 // Load reads configuration from environment variables, falling back to the
 // values used by docker-compose.yml for local development.
 func Load() (Config, error) {
 	cfg := Config{
-		HTTPPort:            intEnv("HTTP_PORT", defaultHTTPPort),
-		AdminerPort:         intEnv("ADMINER_PORT", defaultAdminerPort),
-		MySQLHost:           stringEnv("MYSQL_HOST", defaultMySQLHost),
-		MySQLPort:           intEnv("MYSQL_PORT", defaultMySQLPort),
-		MySQLDatabase:       stringEnv("MYSQL_DATABASE", defaultMySQLDatabase),
-		MySQLUser:           stringEnv("MYSQL_USER", defaultMySQLUser),
-		MySQLPassword:       stringEnv("MYSQL_PASSWORD", defaultMySQLPassword),
-		DBMaxOpenConns:      intEnv("DB_MAX_OPEN_CONNS", defaultDBMaxOpenConns),
-		DBMaxIdleConns:      intEnv("DB_MAX_IDLE_CONNS", defaultDBMaxIdleConns),
-		DBConnMaxLifetime:   durationEnv("DB_CONN_MAX_LIFETIME", defaultDBConnMaxLifetime),
-		DBConnectRetries:    intEnv("DB_CONNECT_RETRIES", defaultDBConnectRetries),
-		DBConnectRetryDelay: durationEnv("DB_CONNECT_RETRY_DELAY", defaultDBConnectRetryDelay),
+		HTTPPort:               intEnv("HTTP_PORT", defaultHTTPPort),
+		AdminerPort:            intEnv("ADMINER_PORT", defaultAdminerPort),
+		MySQLHost:              stringEnv("MYSQL_HOST", defaultMySQLHost),
+		MySQLPort:              intEnv("MYSQL_PORT", defaultMySQLPort),
+		MySQLDatabase:          stringEnv("MYSQL_DATABASE", defaultMySQLDatabase),
+		MySQLUser:              stringEnv("MYSQL_USER", defaultMySQLUser),
+		MySQLPassword:          stringEnv("MYSQL_PASSWORD", defaultMySQLPassword),
+		DBMaxOpenConns:         intEnv("DB_MAX_OPEN_CONNS", defaultDBMaxOpenConns),
+		DBMaxIdleConns:         intEnv("DB_MAX_IDLE_CONNS", defaultDBMaxIdleConns),
+		DBConnMaxLifetime:      durationEnv("DB_CONN_MAX_LIFETIME", defaultDBConnMaxLifetime),
+		DBConnectRetries:       intEnv("DB_CONNECT_RETRIES", defaultDBConnectRetries),
+		DBConnectRetryDelay:    durationEnv("DB_CONNECT_RETRY_DELAY", defaultDBConnectRetryDelay),
+		ConsumerWorkers:        intEnv("CONSUMER_WORKERS", defaultConsumerWorkers),
+		ConsumerQueueSize:      intEnv("CONSUMER_QUEUE_SIZE", defaultConsumerQueueSize),
+		ConsumerProcessTimeout: durationEnv("CONSUMER_PROCESS_TIMEOUT", defaultConsumerProcessTimeout),
 	}
 
 	if err := validate(cfg); err != nil {
@@ -119,6 +129,7 @@ func validate(cfg Config) error {
 		{"DB_MAX_OPEN_CONNS", cfg.DBMaxOpenConns},
 		{"DB_MAX_IDLE_CONNS", cfg.DBMaxIdleConns},
 		{"DB_CONNECT_RETRIES", cfg.DBConnectRetries},
+		{"CONSUMER_WORKERS", cfg.ConsumerWorkers},
 	}
 	for _, field := range positive {
 		if field.value < 1 {
@@ -130,6 +141,12 @@ func validate(cfg Config) error {
 	}
 	if cfg.DBConnectRetryDelay <= 0 {
 		return fmt.Errorf("DB_CONNECT_RETRY_DELAY must be positive")
+	}
+	if cfg.ConsumerQueueSize < 0 {
+		return fmt.Errorf("CONSUMER_QUEUE_SIZE must be zero or positive")
+	}
+	if cfg.ConsumerProcessTimeout <= 0 {
+		return fmt.Errorf("CONSUMER_PROCESS_TIMEOUT must be positive")
 	}
 	return nil
 }

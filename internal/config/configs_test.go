@@ -37,6 +37,10 @@ func TestLoadUsesLocalDefaults(t *testing.T) {
 	if cfg.DBConnMaxLifetime != time.Hour || cfg.DBConnectRetryDelay != time.Second {
 		t.Fatalf("unexpected database timings: %+v", cfg)
 	}
+	if cfg.ConsumerWorkers != 1 || cfg.ConsumerQueueSize != 100 ||
+		cfg.ConsumerProcessTimeout != 10*time.Second {
+		t.Fatalf("unexpected consumer pool defaults: %+v", cfg)
+	}
 }
 
 func TestLoadRejectsInvalidInteger(t *testing.T) {
@@ -44,5 +48,13 @@ func TestLoadRejectsInvalidInteger(t *testing.T) {
 
 	if _, err := Load(); err == nil {
 		t.Fatal("Load() error = nil, want invalid port error")
+	}
+}
+
+func TestLoadRejectsNegativeConsumerQueueSize(t *testing.T) {
+	t.Setenv("CONSUMER_QUEUE_SIZE", "-1")
+
+	if _, err := Load(); err == nil {
+		t.Fatal("Load() error = nil, want invalid queue size error")
 	}
 }

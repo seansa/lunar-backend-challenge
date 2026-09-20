@@ -10,6 +10,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/seansa/lunar-backend-challenge/internal/config"
+	"github.com/seansa/lunar-backend-challenge/internal/consumer"
 	"github.com/seansa/lunar-backend-challenge/internal/service"
 	eventstore "github.com/seansa/lunar-backend-challenge/internal/store/event/mysql"
 	rocketstore "github.com/seansa/lunar-backend-challenge/internal/store/rocket/mysql"
@@ -19,6 +20,7 @@ type dependencies struct {
 	service          *service.Service
 	eventRepository  *eventstore.Repository
 	rocketRepository *rocketstore.Repository
+	consumer         *consumer.Pool
 }
 
 func main() {
@@ -40,7 +42,7 @@ func run() error {
 	}
 	defer db.Close()
 
-	deps, err := makeDependencies(db)
+	deps, err := makeDependencies(db, cfg)
 	if err != nil {
 		return fmt.Errorf("make dependencies: %w", err)
 	}
@@ -53,15 +55,24 @@ func run() error {
 	return nil
 }
 
-func makeDependencies(db *sql.DB) (*dependencies, error) {
+func makeDependencies(db *sql.DB, cfg config.Config) (*dependencies, error) {
 	eventRepository := eventstore.New(db)
 	rocketRepository := rocketstore.New(db)
 	service := service.New(eventRepository, rocketRepository)
+
+	consumerService := consumer.New(eventRepository, service)
+
+	pool := consumer.NewPool(consumerService, consumer.PoolOptions{
+		Workers:        cfg.ConsumerWorkers,
+		QueueSize:      cfg.ConsumerQueueSize,
+		ProcessTimeout: cfg.ConsumerProcessTimeout,
+	})
 
 	return &dependencies{
 		service:          service,
 		eventRepository:  eventRepository,
 		rocketRepository: rocketRepository,
+		consumer:         pool,
 	}, nil
 }
 
