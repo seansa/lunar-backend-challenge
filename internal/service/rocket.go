@@ -4,11 +4,13 @@ import (
 	"context"
 
 	"github.com/seansa/lunar-backend-challenge/internal/domain"
+	"github.com/seansa/lunar-backend-challenge/internal/store/rocket"
 )
 
 type rocketProjection interface {
 	Get(ctx context.Context, channel string) (domain.Rocket, bool, error)
 	Upsert(ctx context.Context, r domain.Rocket) error
+	List(ctx context.Context, opts rocket.ListOptions) ([]domain.Rocket, error)
 }
 
 const (
@@ -71,6 +73,21 @@ func (s *Service) ApplyEvent(ctx context.Context, e domain.Event) (bool, error) 
 		return notAppliedEvent, err
 	}
 	return appliedEvent, nil
+}
+
+func (s Service) Rockets(ctx context.Context, opts rocket.ListOptions) ([]domain.Rocket, error) {
+	return s.projection.List(ctx, opts)
+}
+
+func (s Service) Rocket(ctx context.Context, channel string) (domain.Rocket, error) {
+	result, found, err := s.projection.Get(ctx, channel)
+	if err != nil {
+		return domain.Rocket{}, err
+	}
+	if !found {
+		return domain.Rocket{}, rocket.ErrRocketNotFound
+	}
+	return result, nil
 }
 
 func (s *Service) rebuildFromStore(ctx context.Context, channel string) (domain.Rocket, bool, error) {

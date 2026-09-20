@@ -1,0 +1,580 @@
+{
+  "info": {
+    "_postman_id": "ac8418bf-0611-45e5-8fb2-9f1903781676",
+    "name": "Lunar rocket challenge",
+    "description": "### Welcome to Postman! This is your first collection. \n\nCollections are your starting point for building and testing APIs. You can use this one to:\n\n• Group related requests\n• Test your API in real-world scenarios\n• Document and share your requests\n\nUpdate the name and overview whenever you’re ready to make it yours.\n\n[Learn more about Postman Collections.](https://learning.postman.com/docs/collections/collections-overview/)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "58378547",
+    "_collection_link": "https://go.postman.co/collection/58378547-ac8418bf-0611-45e5-8fb2-9f1903781676?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Read",
+      "item": [
+        {
+          "name": "/rockets",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:8088/rockets?sort=mission&order=desc",
+              "host": [
+                "localhost"
+              ],
+              "port": "8088",
+              "path": [
+                "rockets"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "mission"
+                },
+                {
+                  "key": "order",
+                  "value": "desc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "/rockets/:channel",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:8088/rockets/:channel",
+              "host": [
+                "localhost"
+              ],
+              "port": "8088",
+              "path": [
+                "rockets",
+                ":channel"
+              ],
+              "variable": [
+                {
+                  "key": "channel",
+                  "value": "d093fa48-f328-5340-91ef-ecf0d87fa357"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "/rockets/:channel/events",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "localhost:8088/rockets/:channel/events",
+              "host": [
+                "localhost"
+              ],
+              "port": "8088",
+              "path": [
+                "rockets",
+                ":channel",
+                "events"
+              ],
+              "variable": [
+                {
+                  "key": "channel",
+                  "value": "d093fa48-f328-5340-91ef-ecf0d87fa357"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Write",
+      "item": [
+        {
+          "name": "/messages",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 1,\r\n        \"messageTime\": \"2022-02-02T19:39:05.86337+01:00\",\r\n        \"messageType\": \"RocketLaunched\"\r\n    },\r\n    \"message\": {\r\n        \"type\": \"Falcon-9\",\r\n        \"launchSpeed\": 500,\r\n        \"mission\": \"ARTEMIS\"\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "localhost:8088/messages",
+              "host": [
+                "localhost"
+              ],
+              "port": "8088",
+              "path": [
+                "messages"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "RocketLaunched",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 1,\r\n        \"messageTime\": \"2022-02-02T19:39:05.86337+01:00\",\r\n        \"messageType\": \"RocketLaunched\"\r\n    },\r\n    \"message\": {\r\n        \"type\": \"Falcon-9\",\r\n        \"launchSpeed\": 500,\r\n        \"mission\": \"ARTEMIS\"\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "localhost:8088/messages",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            },
+            {
+              "name": "RocketSpeedIncreased",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 2,\r\n        \"messageTime\": \"2022-02-02T19:39:10.86337+01:00\",\r\n        \"messageType\": \"RocketSpeedIncreased\"\r\n    },\r\n    \"message\": {\r\n        \"by\": 3000\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8088/messages",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            },
+            {
+              "name": "RocketSpeedDecreased",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 3,\r\n        \"messageTime\": \"2022-02-02T19:39:15.86337+01:00\",\r\n        \"messageType\": \"RocketSpeedDecreased\"\r\n    },\r\n    \"message\": {\r\n        \"by\": 2500\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8088/messages",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            },
+            {
+              "name": "RocketMissionChanged",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 4,\r\n        \"messageTime\": \"2022-02-02T19:39:20.86337+01:00\",\r\n        \"messageType\": \"RocketMissionChanged\"\r\n    },\r\n    \"message\": {\r\n        \"newMission\": \"SHUTTLE_MIR\"\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8088/messages",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            },
+            {
+              "name": "RocketExploded",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 5,\r\n        \"messageTime\": \"2022-02-02T19:39:25.86337+01:00\",\r\n        \"messageType\": \"RocketExploded\"\r\n    },\r\n    \"message\": {\r\n        \"reason\": \"PRESSURE_VESSEL_FAILURE\"\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8088/messages",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "/events",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 1,\r\n        \"messageTime\": \"2022-02-02T19:39:05.86337+01:00\",\r\n        \"messageType\": \"RocketLaunched\"\r\n    },\r\n    \"message\": {\r\n        \"type\": \"Falcon-9\",\r\n        \"launchSpeed\": 500,\r\n        \"mission\": \"ARTEMIS\"\r\n    }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "localhost:8088/events",
+              "host": [
+                "localhost"
+              ],
+              "port": "8088",
+              "path": [
+                "events"
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "RocketLaunched",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 1,\r\n        \"messageTime\": \"2022-02-02T19:39:05.86337+01:00\",\r\n        \"messageType\": \"RocketLaunched\"\r\n    },\r\n    \"message\": {\r\n        \"type\": \"Falcon-9\",\r\n        \"launchSpeed\": 500,\r\n        \"mission\": \"ARTEMIS\"\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "localhost:8088/messages",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            },
+            {
+              "name": "RocketSpeedIncreased",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 2,\r\n        \"messageTime\": \"2022-02-02T19:39:10.86337+01:00\",\r\n        \"messageType\": \"RocketSpeedIncreased\"\r\n    },\r\n    \"message\": {\r\n        \"by\": 3000\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8088/messages",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            },
+            {
+              "name": "RocketSpeedDecreased",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 3,\r\n        \"messageTime\": \"2022-02-02T19:39:15.86337+01:00\",\r\n        \"messageType\": \"RocketSpeedDecreased\"\r\n    },\r\n    \"message\": {\r\n        \"by\": 2500\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8088/messages",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            },
+            {
+              "name": "RocketMissionChanged",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 4,\r\n        \"messageTime\": \"2022-02-02T19:39:20.86337+01:00\",\r\n        \"messageType\": \"RocketMissionChanged\"\r\n    },\r\n    \"message\": {\r\n        \"newMission\": \"SHUTTLE_MIR\"\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8088/messages",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            },
+            {
+              "name": "RocketExploded",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\r\n    \"metadata\": {\r\n        \"channel\": \"193270a9-c9cf-404a-8f83-838e71d9ae67\",\r\n        \"messageNumber\": 5,\r\n        \"messageTime\": \"2022-02-02T19:39:25.86337+01:00\",\r\n        \"messageType\": \"RocketExploded\"\r\n    },\r\n    \"message\": {\r\n        \"reason\": \"PRESSURE_VESSEL_FAILURE\"\r\n    }\r\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://localhost:8088/messages",
+                  "protocol": "http",
+                  "host": [
+                    "localhost"
+                  ],
+                  "port": "8088",
+                  "path": [
+                    "messages"
+                  ]
+                }
+              },
+              "_postman_previewlanguage": "",
+              "header": [],
+              "cookie": [
+                {
+                  "expires": "Invalid Date",
+                  "domain": "",
+                  "path": ""
+                }
+              ],
+              "body": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -36,6 +36,9 @@ func run() error {
 		return fmt.Errorf("load config: %w", err)
 	}
 
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel}))
+	slog.SetDefault(logger)
+
 	db, err := openDatabase(context.Background(), cfg)
 	if err != nil {
 		return fmt.Errorf("open database: %w", err)
@@ -46,6 +49,10 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("make dependencies: %w", err)
 	}
+
+	consumerCtx, stopConsumer := context.WithCancel(context.Background())
+	defer stopConsumer()
+	deps.consumer.Start(consumerCtx)
 
 	r := newRouter(deps)
 

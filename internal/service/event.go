@@ -64,3 +64,7 @@ func (s *Service) Process(ctx context.Context, message domain.Message) (Result, 
 		Duplicate:     duplicate,
 	}, nil
 }
+
+func (s *Service) Events(ctx context.Context, channel string) ([]domain.Event, error) {
+	return s.store.Events(ctx, channel)
+}

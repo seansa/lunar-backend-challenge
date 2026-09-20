@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"time"
@@ -9,7 +10,7 @@ import (
 
 const (
 	defaultHTTPPort               = 8088
-	defaultAdminerPort            = 8080
+	defaultLogLevel               = slog.LevelInfo
 	defaultMySQLHost              = "localhost"
 	defaultMySQLPort              = 3306
 	defaultMySQLDatabase          = "lunar"
@@ -28,8 +29,9 @@ const (
 // Config contains the runtime settings shared by the API and local database
 // services.
 type Config struct {
-	HTTPPort    int
-	AdminerPort int
+	HTTPPort int
+
+	LogLevel slog.Level
 
 	MySQLHost     string
 	MySQLPort     int
@@ -54,7 +56,6 @@ type Config struct {
 func Load() (Config, error) {
 	cfg := Config{
 		HTTPPort:               intEnv("HTTP_PORT", defaultHTTPPort),
-		AdminerPort:            intEnv("ADMINER_PORT", defaultAdminerPort),
 		MySQLHost:              stringEnv("MYSQL_HOST", defaultMySQLHost),
 		MySQLPort:              intEnv("MYSQL_PORT", defaultMySQLPort),
 		MySQLDatabase:          stringEnv("MYSQL_DATABASE", defaultMySQLDatabase),
@@ -70,6 +71,12 @@ func Load() (Config, error) {
 		ConsumerProcessTimeout: durationEnv("CONSUMER_PROCESS_TIMEOUT", defaultConsumerProcessTimeout),
 	}
 
+	logLevel, err := logLevelEnv("LOG_LEVEL", defaultLogLevel)
+	if err != nil {
+		return Config{}, err
+	}
+	cfg.LogLevel = logLevel
+
 	if err := validate(cfg); err != nil {
 		return Config{}, err
 	}
@@ -83,6 +90,19 @@ func Load() (Config, error) {
 		cfg.MySQLDatabase,
 	)
 	return cfg, nil
+}
+
+func logLevelEnv(key string, fallback slog.Level) (slog.Level, error) {
+	value, ok := os.LookupEnv(key)
+	if !ok {
+		return fallback, nil
+	}
+
+	var level slog.Level
+	if err := level.UnmarshalText([]byte(value)); err != nil {
+		return 0, fmt.Errorf("%s must be one of debug, info, warn, or error: %w", key, err)
+	}
+	return level, nil
 }
 
 func stringEnv(key, fallback string) string {
@@ -124,7 +144,6 @@ func validate(cfg Config) error {
 		value int
 	}{
 		{"HTTP_PORT", cfg.HTTPPort},
-		{"ADMINER_PORT", cfg.AdminerPort},
 		{"MYSQL_PORT", cfg.MySQLPort},
 		{"DB_MAX_OPEN_CONNS", cfg.DBMaxOpenConns},
 		{"DB_MAX_IDLE_CONNS", cfg.DBMaxIdleConns},

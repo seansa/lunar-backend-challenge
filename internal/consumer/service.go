@@ -12,12 +12,11 @@ import (
 
 // Result describes what happened to an inbound message.
 type Result struct {
-	Channel       string    `json:"channel"`
-	MessageNumber int64     `json:"messageNumber"`
-	MessageType   string    `json:"messageType"`
-	Duplicate     bool      `json:"duplicate"`
-	Applied       bool      `json:"applied"`
-	ReceivedAt    time.Time `json:"receivedAt"`
+	Channel       string `json:"channel"`
+	MessageNumber int64  `json:"messageNumber"`
+	MessageType   string `json:"messageType"`
+	Duplicate     bool   `json:"duplicate"`
+	Applied       bool   `json:"applied"`
 }
 
 // Applier folds a stored event into the rocket state.
