@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/seansa/lunar-backend-challenge/internal/domain"
+	"github.com/seansa/lunar-backend-challenge/internal/store/rocket"
 )
 
 const rocketInsertColumns = `
@@ -25,6 +26,15 @@ ON DUPLICATE KEY UPDATE
 	rocket_type = ?, mission = ?, mission_changes = ?, speed = ?, launch_speed = ?, status = ?,
 	exploded_reason = ?, last_message_number = ?, last_message_time = ?, launched_at = ?, exploded_at = ?,
 	events_applied = ?`
+
+const selectRockets = `SELECT` + rocketSelectColumns + ` FROM rockets ORDER BY %s %s, channel ASC`
+
+var sortColumns = map[rocket.SortField]string{
+	rocket.SortByChannel: "channel",
+	rocket.SortByType:    "rocket_type",
+	rocket.SortByMission: "mission",
+	rocket.SortByStatus:  "status",
+}
 
 type Repository struct {
 	db *sql.DB
@@ -54,6 +64,33 @@ func (r *Repository) Upsert(ctx context.Context, rocket domain.Rocket) error {
 		return fmt.Errorf("upsert rocket %s: %w", rocket.Channel, err)
 	}
 	return nil
+}
+
+func (r *Repository) List(ctx context.Context, opts rocket.ListOptions) ([]domain.Rocket, error) {
+	column, ok := sortColumns[opts.Sort]
+	if !ok {
+		column = sortColumns[rocket.SortByChannel]
+	}
+	direction := "ASC"
+	if opts.Descending {
+		direction = "DESC"
+	}
+
+	rows, err := r.db.QueryContext(ctx, fmt.Sprintf(selectRockets, column, direction))
+	if err != nil {
+		return nil, fmt.Errorf("list rockets: %w", err)
+	}
+	defer rows.Close()
+
+	rockets := make([]domain.Rocket, 0, 64)
+	for rows.Next() {
+		rocket, err := scanRocket(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan rocket: %w", err)
+		}
+		rockets = append(rockets, rocket)
+	}
+	return rockets, rows.Err()
 }
 
 func rocketArgs(rocket domain.Rocket) []any {

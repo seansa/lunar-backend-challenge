@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -8,7 +9,7 @@ import (
 
 func TestLoadUsesLocalDefaults(t *testing.T) {
 	for _, key := range []string{
-		"HTTP_PORT", "ADMINER_PORT", "MYSQL_HOST", "MYSQL_PORT",
+		"HTTP_PORT", "LOG_LEVEL", "MYSQL_HOST", "MYSQL_PORT",
 		"MYSQL_DATABASE", "MYSQL_USER", "MYSQL_PASSWORD",
 		"DB_MAX_OPEN_CONNS", "DB_MAX_IDLE_CONNS", "DB_CONN_MAX_LIFETIME",
 		"DB_CONNECT_RETRIES", "DB_CONNECT_RETRY_DELAY",
@@ -28,8 +29,11 @@ func TestLoadUsesLocalDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load() error = %v", err)
 	}
-	if cfg.HTTPPort != 8088 || cfg.AdminerPort != 8080 {
+	if cfg.HTTPPort != 8088 {
 		t.Fatalf("unexpected ports: %+v", cfg)
+	}
+	if cfg.LogLevel != slog.LevelInfo {
+		t.Fatalf("unexpected log level: %s", cfg.LogLevel)
 	}
 	if cfg.MySQLDSN != "lunar:lunar@tcp(localhost:3306)/lunar?parseTime=true&loc=UTC" {
 		t.Fatalf("unexpected DSN: %q", cfg.MySQLDSN)
@@ -37,9 +41,17 @@ func TestLoadUsesLocalDefaults(t *testing.T) {
 	if cfg.DBConnMaxLifetime != time.Hour || cfg.DBConnectRetryDelay != time.Second {
 		t.Fatalf("unexpected database timings: %+v", cfg)
 	}
-	if cfg.ConsumerWorkers != 1 || cfg.ConsumerQueueSize != 100 ||
+	if cfg.ConsumerWorkers != 5 || cfg.ConsumerQueueSize != 100 ||
 		cfg.ConsumerProcessTimeout != 10*time.Second {
 		t.Fatalf("unexpected consumer pool defaults: %+v", cfg)
+	}
+}
+
+func TestLoadRejectsInvalidLogLevel(t *testing.T) {
+	t.Setenv("LOG_LEVEL", "verbose")
+
+	if _, err := Load(); err == nil {
+		t.Fatal("Load() error = nil, want invalid log level error")
 	}
 }
 
