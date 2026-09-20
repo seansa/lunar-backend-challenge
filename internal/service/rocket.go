@@ -19,6 +19,9 @@ const (
 )
 
 func (s *Service) ApplyEvent(ctx context.Context, e domain.Event) (bool, error) {
+	release := s.locks.Lock(e.Channel)
+	defer release()
+
 	current, found, err := s.projection.Get(ctx, e.Channel)
 	if err != nil {
 		return notAppliedEvent, err
@@ -43,16 +46,8 @@ func (s *Service) ApplyEvent(ctx context.Context, e domain.Event) (bool, error) 
 			return notAppliedEvent, err
 		}
 
-		for _, e := range pending {
-			if e.Number <= rocket.LastMessageNumber {
-				continue
-			}
-			if e.Number != rocket.LastMessageNumber+1 {
-				break
-			}
-			if err := rocket.ApplyEvent(e); err != nil {
-				return notAppliedEvent, err
-			}
+		if _, err := applyInOrder(&rocket, pending); err != nil {
+			return notAppliedEvent, err
 		}
 
 		if err := s.projection.Upsert(ctx, rocket); err != nil {
@@ -98,6 +93,14 @@ func (s *Service) rebuildFromStore(ctx context.Context, channel string) (domain.
 
 	rocket := domain.Rocket{Channel: channel}
 
+	applied, err := applyInOrder(&rocket, events)
+	if err != nil {
+		return domain.Rocket{}, false, err
+	}
+	return rocket, applied > 0, nil
+}
+
+func applyInOrder(rocket *domain.Rocket, events []domain.Event) (int, error) {
 	applied := 0
 	for _, e := range events {
 		if e.Number <= rocket.LastMessageNumber {
@@ -107,9 +110,9 @@ func (s *Service) rebuildFromStore(ctx context.Context, channel string) (domain.
 			break
 		}
 		if err := rocket.ApplyEvent(e); err != nil {
-			return domain.Rocket{}, false, err
+			return applied, err
 		}
 		applied++
 	}
-	return rocket, applied > 0, nil
+	return applied, nil
 }

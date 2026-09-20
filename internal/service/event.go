@@ -7,6 +7,7 @@ import (
 
 	"github.com/seansa/lunar-backend-challenge/internal/domain"
 	"github.com/seansa/lunar-backend-challenge/internal/store/event"
+	"github.com/seansa/lunar-backend-challenge/pkg/lock"
 )
 
 type Result struct {
@@ -26,12 +27,14 @@ type eventStore interface {
 type Service struct {
 	store      eventStore
 	projection rocketProjection
+	locks      *lock.KeyedMutex
 }
 
 func New(store eventStore, projection rocketProjection) *Service {
 	return &Service{
 		store:      store,
 		projection: projection,
+		locks:      lock.NewKeyedMutex(),
 	}
 }
 
