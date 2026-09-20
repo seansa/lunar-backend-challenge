@@ -28,17 +28,23 @@ type RocketReader interface {
 	Rocket(ctx context.Context, channel string) (domain.Rocket, error)
 }
 
+type EventReader interface {
+	Events(ctx context.Context, channel string) ([]domain.Event, error)
+}
+
 type Handler struct {
 	service      Processor
 	dispatcher   Dispatcher
 	rocketReader RocketReader
+	eventReader  EventReader
 }
 
-func New(service Processor, dispatcher Dispatcher, rocketReader RocketReader) *Handler {
+func New(service Processor, dispatcher Dispatcher, rocketReader RocketReader, eventReader EventReader) *Handler {
 	return &Handler{
 		service:      service,
 		dispatcher:   dispatcher,
 		rocketReader: rocketReader,
+		eventReader:  eventReader,
 	}
 }
 
@@ -147,19 +153,24 @@ func (h *Handler) GetRocket(c *gin.Context) {
 	c.JSON(http.StatusOK, toRocketResponse(response))
 }
 
-// respondConsumerError maps consumer failures to status codes the sender can act on.
-// Non-2xx answers make the rocket redeliver, which is what we want for the
-// transient cases: at-least-once delivery plus deduplication make retries safe.
-func respondConsumerError(c *gin.Context, err error) {
-	switch {
-	case errors.Is(err, consumer.ErrPoolClosed):
-		c.Header("Retry-After", "1")
-		respondError(c, http.StatusServiceUnavailable, "service_shutting_down",
-			"the service is shutting down, retry the message")
-	case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):
-		c.Header("Retry-After", "1")
-		respondError(c, http.StatusServiceUnavailable, "consumer_timeout", "the message could not be consumed in time")
-	default:
-		respondError(c, http.StatusInternalServerError, "internal_error", "the message could not be stored")
+func (h *Handler) ListEvents(c *gin.Context) {
+	channel := c.Param("channel")
+
+	events, err := h.eventReader.Events(c, channel)
+	if err != nil {
+		slog.Error("list events failed", "channel", channel, "error", err)
+		respondError(c, http.StatusInternalServerError, "internal_error", "the events could not be read")
+		return
 	}
+	if len(events) == 0 {
+		respondError(c, http.StatusNotFound, "rocket_not_found", "no rocket with that channel")
+		return
+	}
+
+	response := eventListResponse{Channel: channel, Count: len(events), Events: make([]eventResponse, 0, len(events))}
+	for _, event := range events {
+		response.Events = append(response.Events, toEventResponse(event))
+	}
+
+	c.JSON(http.StatusOK, response)
 }
