@@ -2,10 +2,13 @@ package service
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/seansa/lunar-backend-challenge/internal/domain"
 	"github.com/seansa/lunar-backend-challenge/internal/store/rocket"
 )
+
+//go:generate go tool mockgen -source=rocket.go -destination=../mocks/rocket_projection.go -package=mocks -typed -mock_names=rocketProjection=MockRocketProjection
 
 type rocketProjection interface {
 	Get(ctx context.Context, channel string) (domain.Rocket, bool, error)
@@ -19,6 +22,11 @@ const (
 )
 
 func (s *Service) ApplyEvent(ctx context.Context, e domain.Event) (bool, error) {
+	// Folding one channel is serialised: the read-modify-write below has to stay
+	// inside the lock, otherwise a slow worker can overwrite a newer state.
+	release := s.locks.Lock(e.Channel)
+	defer release()
+
 	current, found, err := s.projection.Get(ctx, e.Channel)
 	if err != nil {
 		return notAppliedEvent, err
@@ -34,8 +42,8 @@ func (s *Service) ApplyEvent(ctx context.Context, e domain.Event) (bool, error) 
 	}
 
 	if e.Number == rocket.LastMessageNumber+1 {
-		if err := rocket.ApplyEvent(e); err != nil {
-			return notAppliedEvent, err
+		if !rocket.ApplyEvent(e) {
+			logSkipped(e)
 		}
 
 		pending, err := s.store.EventsAfter(ctx, e.Channel, rocket.LastMessageNumber)
@@ -43,17 +51,7 @@ func (s *Service) ApplyEvent(ctx context.Context, e domain.Event) (bool, error) 
 			return notAppliedEvent, err
 		}
 
-		for _, e := range pending {
-			if e.Number <= rocket.LastMessageNumber {
-				continue
-			}
-			if e.Number != rocket.LastMessageNumber+1 {
-				break
-			}
-			if err := rocket.ApplyEvent(e); err != nil {
-				return notAppliedEvent, err
-			}
-		}
+		applyInOrder(&rocket, pending)
 
 		if err := s.projection.Upsert(ctx, rocket); err != nil {
 			return notAppliedEvent, err
@@ -72,7 +70,10 @@ func (s *Service) ApplyEvent(ctx context.Context, e domain.Event) (bool, error) 
 	if err := s.projection.Upsert(ctx, rebuilt); err != nil {
 		return notAppliedEvent, err
 	}
-	return appliedEvent, nil
+
+	// The rebuild rewrites the state even when the message we received is not the
+	// next one, so report whether the projection actually moved forward.
+	return rebuilt.LastMessageNumber > current.LastMessageNumber, nil
 }
 
 func (s Service) Rockets(ctx context.Context, opts rocket.ListOptions) ([]domain.Rocket, error) {
@@ -97,8 +98,15 @@ func (s *Service) rebuildFromStore(ctx context.Context, channel string) (domain.
 	}
 
 	rocket := domain.Rocket{Channel: channel}
+	applyInOrder(&rocket, events)
 
-	applied := 0
+	return rocket, rocket.LastMessageNumber > 0, nil
+}
+
+// applyInOrder folds every event that extends the contiguous run of the stream,
+// so messages that arrived early are folded as soon as their predecessors are
+// there.
+func applyInOrder(rocket *domain.Rocket, events []domain.Event) {
 	for _, e := range events {
 		if e.Number <= rocket.LastMessageNumber {
 			continue
@@ -106,10 +114,14 @@ func (s *Service) rebuildFromStore(ctx context.Context, channel string) (domain.
 		if e.Number != rocket.LastMessageNumber+1 {
 			break
 		}
-		if err := rocket.ApplyEvent(e); err != nil {
-			return domain.Rocket{}, false, err
+		if !rocket.ApplyEvent(e) {
+			logSkipped(e)
 		}
-		applied++
 	}
-	return rocket, applied > 0, nil
+}
+
+// logSkipped records a message we could not fold. It is not an error: the event
+// is stored, and the projection moves on.
+func logSkipped(e domain.Event) {
+	slog.Warn("event skipped", "channel", e.Channel, "message_number", e.Number, "message_type", e.Type)
 }

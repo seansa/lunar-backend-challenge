@@ -2,7 +2,6 @@ package domain
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -50,22 +49,30 @@ type Rocket struct {
 	ExplodedAt        time.Time
 	MissionChanges    int
 	LastMessageTime   time.Time
-	EventsApplied     int
-	UpdatedAt         time.Time
+	// EventsApplied counts the messages consumed, including the ones that could not be folded.
+	EventsApplied int
+	UpdatedAt     time.Time
 }
 
-// ApplyEvent folds a single event into the aggregate.
-func (r *Rocket) ApplyEvent(e Event) error {
+// ApplyEvent folds a single event into the aggregate and reports whether it was
+// folded. An event we cannot interpret, either an unknown message type or a
+// payload that does not decode, is skipped but still consumed: the sequence
+// moves on, so one bad message can never block a channel. The payload stays in
+// the event log and can be folded again once the type is known.
+func (r *Rocket) ApplyEvent(e Event) bool {
 	r.Channel = e.Channel
 	if r.Status == "" {
 		r.Status = StatusUnknown
 	}
 
+	folded := true
+
 	switch e.Type {
 	case MessageRocketLaunched:
 		var p LaunchedPayload
 		if err := json.Unmarshal(e.Payload, &p); err != nil {
-			return fmt.Errorf("decode %s payload: %w", e.Type, err)
+			folded = false
+			break
 		}
 		// A rocket launches once; a re-launch is stored in the log but does not
 		// reset already accumulated speed or mission changes. StatusUnknown is
@@ -82,21 +89,24 @@ func (r *Rocket) ApplyEvent(e Event) error {
 	case MessageRocketSpeedIncreased:
 		var p SpeedChangedPayload
 		if err := json.Unmarshal(e.Payload, &p); err != nil {
-			return fmt.Errorf("decode %s payload: %w", e.Type, err)
+			folded = false
+			break
 		}
 		r.Speed += p.By
 
 	case MessageRocketSpeedDecreased:
 		var p SpeedChangedPayload
 		if err := json.Unmarshal(e.Payload, &p); err != nil {
-			return fmt.Errorf("decode %s payload: %w", e.Type, err)
+			folded = false
+			break
 		}
 		r.Speed -= p.By
 
 	case MessageRocketExploded:
 		var p ExplodedPayload
 		if err := json.Unmarshal(e.Payload, &p); err != nil {
-			return fmt.Errorf("decode %s payload: %w", e.Type, err)
+			folded = false
+			break
 		}
 		if r.Status != StatusExploded {
 			r.Status = StatusExploded
@@ -107,17 +117,19 @@ func (r *Rocket) ApplyEvent(e Event) error {
 	case MessageRocketMissionChanged:
 		var p MissionChangedPayload
 		if err := json.Unmarshal(e.Payload, &p); err != nil {
-			return fmt.Errorf("decode %s payload: %w", e.Type, err)
+			folded = false
+			break
 		}
 		r.Mission = p.NewMission
 		r.MissionChanges++
 
 	default:
-		return fmt.Errorf("unknown message type %q", e.Type)
+		// Tolerant reader: message types we do not know yet are not fatal.
+		folded = false
 	}
 
 	r.LastMessageNumber = e.Number
 	r.LastMessageTime = e.Time
 	r.EventsApplied++
-	return nil
+	return folded
 }
